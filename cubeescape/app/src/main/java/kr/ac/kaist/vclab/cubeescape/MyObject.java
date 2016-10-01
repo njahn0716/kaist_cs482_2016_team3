@@ -32,7 +32,7 @@ public class MyObject {
     private final int program;
 
     private int verID, colID, norID, texID;
-    private int mvpID;
+    private int mvpID, textypeID;
 
     private int[] bufferIDs = new int[10];
 
@@ -42,7 +42,8 @@ public class MyObject {
     public float[] mvp;
     private float[] reset;
 
-
+    static int textureCount;
+    static int textureID;
     static Vector<Integer> textures;
     static Vector<Float> vertices;
     static Vector<Float> colors;
@@ -74,9 +75,9 @@ public class MyObject {
         for(int i = 0; i < 4; i++){
             for(int j = 0; j < 4; j++){
                 if(i == j){
-                    reset[j * 4 + i] = 1.0f;
+                    reset[i * 4 + j] = 1.0f;
                 } else{
-                    reset[j * 4 + i] = 0.0f;
+                    reset[i * 4 + j] = 0.0f;
                 }
             }
         }
@@ -96,7 +97,7 @@ public class MyObject {
         GLES20.glUseProgram(program);
 
         mvpID = GLES20.glGetUniformLocation(program, "MVP");
-
+        textypeID = GLES20.glGetUniformLocation(program, "texID");
         verID = GLES20.glGetAttribLocation(program, "aPosition");
         colID = GLES20.glGetAttribLocation(program, "aColor");
         norID = GLES20.glGetAttribLocation(program, "aNormal");
@@ -150,7 +151,7 @@ public class MyObject {
 
         GLES20.glEnableVertexAttribArray(verID);
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, bufferIDs[0]);
-        GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, 4 * vertices.size(), verBuffer, GLES20.GL_STATIC_DRAW);
+        GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, vertices.size() * 4, verBuffer, GLES20.GL_STATIC_DRAW);
     }
 
     private void updateColor(){
@@ -186,6 +187,22 @@ public class MyObject {
         GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, normals.size() * 4, norBuffer, GLES20.GL_STATIC_DRAW);
     }
 
+    private void updateTex(){
+        ByteBuffer bb = ByteBuffer.allocateDirect(texcoords.size() * 4);
+        bb.order(ByteOrder.nativeOrder());
+        texBuffer = bb.asFloatBuffer();
+        texBuffer.position(0);
+        Float temp[] = texcoords.toArray(new Float[0]);
+        for(int i = 0; i < texcoords.size(); i++){
+            texBuffer.put(temp[i]);
+        }
+        texBuffer.position(0);
+
+        GLES20.glEnableVertexAttribArray(texID);
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, bufferIDs[3]);
+        GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, texcoords.size() * 4, texBuffer, GLES20.GL_STATIC_DRAW);
+    }
+
     private void computeMVP(){
         float[] temp = new float[16];
         float[] invTemp = new float[16];
@@ -204,11 +221,15 @@ public class MyObject {
         updateVertex();
         updateNormal();
         updateColor();
+        updateTex();
+        GLES20.glUniform1i(textypeID, textureCount);
     }
 
-    public void addTexture(int textureID){
-        textures.add(textureID);
+    public void setTexture(int count, int ID){
+        textureCount = count;
+        textureID = ID;
     }
+
 
     public void addTexCoord(float u, float v){
         texcoords.add(u);
@@ -240,6 +261,9 @@ public class MyObject {
     public void draw(){
         GLES20.glUseProgram(program);
         update();
+
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0 + textureCount);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureID);
 
         GLES20.glEnableVertexAttribArray(verID);
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, bufferIDs[0]);
