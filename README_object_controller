@@ -1,0 +1,88 @@
+Instruction / Namjo Ahn
+
+- Follow Simple Instruction
+- If some more control is needed, read Detailed Instruction
+---------------------------------------------------------------------
+- Functions to be added (I'll follow this order)
+  - Object Picking
+  - Rotation + Translation
+  - Other kind of objects, and .obj file loading
+  
+  - Default Texture(For texture path not specified)
+  - Multiple texture for one object
+  
+  - Multiple shader program control and shifting
+  - Lightings
+  - Bumpmap Shading
+  - Other shadings
+  
+  - vertex modification(if really needed)
+  - Object hierarchy(if really needed)
+  
+- After each new functions got stable, I'll update this Instruction
+---------------------------------------------------------------------
+Simple Instruction
+
+-> Declare controller [ 
+        MyController control;
+]
+
+-> Initialize [  
+        control = new MyController(); 
+]
+
+-> Add some GLES20 settings [
+        GLES20.glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+        GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+        GLES20.glDepthFunc(GLES20.GL_LESS);
+]
+
+-> Controller setting [
+        control.setProjection(45.0f, aspect_ratio, 0.1f, 100.0f);
+        control.setEye();
+        control.setWorld();
+]
+
+-> Add cubes(Or other types) with "texture_image_path" [
+        control.addCube("CubeMap_colorcube.bmp", 1.0f, 0.0f, 0.0f);
+]
+
+-> Call draw [
+        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+        control.drawAll();
+]
+
+---------------------------------------------------------------------
+
+Detailed Instruction
+- Controller holds object-related informations and texture_controller
+  enum objectType [CUBE, SQUARE] // Other kind could be added
+
+  .setEye()         : initialize eye as Identity
+  .setEye(float[])  : set eye 
+  .setWorld()       : initialize world as Identity
+  .setWorld(float[]): set world
+  .setProjection(float angle, float ratio, float near_Z, float far_Z) : set projection matrix(Perspective)
+  
+  .addCube(String texturePath, float r,g,b) : Add new cube
+    -> create new object
+    -> load and add texture to texture_controller
+    -> set texture to new object
+    -> set RBTs to new object
+    -> set each side's vertex data
+    -> add to controller's Vector<cube>
+  .add[Type](String texturePath, ....)      : Add new object [Type]
+  
+  .drawAll()                : Draw every kind of objects
+  .drawType(objectType)     : Draw certain type of objects
+  
+  [Don't need to understand/use other functions]
+  
+- Texture_Controller holds texture Buffers
+  .loadBMP(String path) : Load .bmp pixel data to texture buffer
+  IMPORTANT : two kind of data is needed
+    - Texture buffer ID
+    - Active texture Unit
+      - If it can draw all with one active texture unit, it will be deleted.
+      - However, only one texture buffer for one active unit
+  
